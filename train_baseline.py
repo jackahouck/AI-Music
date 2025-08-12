@@ -6,6 +6,10 @@ from sklearn.metrics import accuracy_score, classification_report
 X = np.load("data/processed/X.npy")
 y = np.load("data/processed/y.npy")
 
+#Making pitches octave agnostic
+X = X % 12
+y = y % 12
+
 print('X:', X.shape, 'y:', y.shape, 'min/max pitch:', y.min(), y.max())
 
 X_train, X_test, y_train, y_test = train_test_split(
