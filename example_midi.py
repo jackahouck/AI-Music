@@ -3,7 +3,7 @@ import os
 import random
 
 #Random walk params
-NUM_NOTES = 200
+NUM_NOTES = 10,000
 START_PITCH = 60
 DURATION = 0.5
 STEP_RANGE = [-2, -1, 0, 1, 2]
