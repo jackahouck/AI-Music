@@ -19,7 +19,7 @@ for _ in range(NUM_NOTES):
         velocity=100, pitch=current_pitch, start=start, end=start + DURATION
     )
     piano.notes.append(note)
-    start += duration
+    start += DURATION
 
     step = random.choice(STEP_RANGE)
     current_pitch = max(21, min(108, current_pitch + step))
