@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import os
 
-SEQ_LEN = 3
+SEQ_LEN = 16
 
 df = pd.read_csv("data/processed/notes.csv")
 
