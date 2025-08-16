@@ -14,7 +14,7 @@ piano = pm.Instrument(program=0)
 start = 0
 current_pitch = START_PITCH
 
-for _ in range(NUM_NOTES):
+for i in range(NUM_NOTES):
     note = pm.Note(
         velocity=100, pitch=current_pitch, start=start, end=start + DURATION
     )
