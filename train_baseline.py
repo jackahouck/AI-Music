@@ -2,6 +2,8 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report
+import joblib
+import os
 
 X = np.load("data/processed/X.npy")
 y = np.load("data/processed/y.npy")
@@ -22,3 +24,6 @@ model.fit(X_train, y_train)
 y_pred = model.predict(X_test)
 
 print('Accuracy', accuracy_score(y_test, y_pred))
+
+os.makedirs("models", exist_ok=True)
+joblib.dump(model, "models/baseline.pkl")
