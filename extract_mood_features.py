@@ -31,9 +31,11 @@ def tempo_bpm(midi: pm.PrettyMIDI):
         onsets.append(n.start)
     if len(onsets) < 2:
         return 0.0
+    
     onsets = np.sort(np.array(onsets))
     iois = np.dff(onsets)
     med_ioi = float(np.median(iois))
+
     if med_ioi <= 0:
         return 0.0
     return 60 / med_ioi
@@ -64,31 +66,42 @@ def ioi_variance(midi):
 MAJOR = np.array([0,2,4,5,7,9,11])
 MINOR = np.array([0,2,3,5,7,8,10])
 
-def mode_major_prob(midi: pm.PrettyMIDI):
-    pitches = [n.pitch % 12 for n in get_all_notes(midi)]
-    if not pitches:
-        return 0.0
-    pc_counts = np.bincount(np.array(pitches), minlength=12)
+def mode_major_prob(midi: pm.PrettyMIDI, window_s=30.0) -> float:
+    # collect notes only from the opening window and ignore very short notes
+    notes = [n for n in get_all_notes(midi)
+             if n.start <= window_s and (n.end - n.start) >= 0.08]
+    if not notes:
+        return 0.5
 
-    def best_match(scale):
+    # duration and velocity-weighted pitch-class histogram
+    pc = np.zeros(12, dtype=float)
+    for n in notes:
+        w = (max(1e-6, n.end - n.start) ** 1.5) * (n.velocity / 127.0)
+        pc[n.pitch % 12] += w
+    pc_sum = pc.sum()
+    if pc_sum == 0:
+        return 0.5
+    pc /= pc_sum
+
+    maj = np.array([6.35,2.23,3.48,2.33,4.38,4.09,2.52,5.19,2.39,3.66,2.29,2.88], dtype=float)
+    minr = np.array([6.33,2.68,3.52,5.38,2.60,3.53,2.54,4.75,3.98,2.69,3.34,3.17], dtype=float)
+    maj /= maj.sum(); minr /= minr.sum()
+
+    def best_sim(profile):
         best = 0.0
-        total = pc_counts.sum()
-        if total == 0:
-            return 0.0
-        for tonic in range(12):
-            mask = np.zeros(12, dtype=bool)
-            mask[(scale + tonic) % 12] = True
-            frac = pc_counts[mask].sum() / total
-            if frac > best:
-                best = frac
-        return best 
+        for t in range(12):
+            pr = np.roll(profile, t)
+            num = float(np.dot(pc, pr))
+            den = float(np.linalg.norm(pc) * np.linalg.norm(pr))
+            best = max(best, (num / den) if den else 0.0)
+        return best
+
+    maj_score = best_sim(maj)
+    min_score = best_sim(minr)
+    denom = maj_score + min_score
+    return float(maj_score / denom) if denom > 0 else 0.5
+
     
-    maj_best = best_match(MAJOR)
-    min_best = best_match(MINOR)
-
-    denominator = (maj_best + min_best)
-    return float(maj_best / denominator) if denominator > 0 else 0.0
-
 def features_for_file(path: str, modd: str):
     try:
         midi = pm.PrettyMIDI(path)
